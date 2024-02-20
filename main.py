@@ -1,17 +1,9 @@
 import streamlit as st
-import json
-import modules.login as Login
-import modules.pageSwitcher as PageSwitcher
+from st_pages import show_pages_from_config, hide_pages
+import modules.hiddenPages as hiddenPages
 
-def login(): PageSwitcher.pageState(1)
-def home(): PageSwitcher.pageState(0)
+hide_pages(hiddenPages.pages)
 
-st.sidebar.button(label="Home", on_click=home)
-st.sidebar.button(label="Login", on_click=login, type="primary")
+show_pages_from_config()
 
-placeholder = st.empty()
-
-PageSwitcher.grabPage()
-
-
-
+st.title("SpaceTraders - v2")
