@@ -2,21 +2,31 @@ import requests
 import json
 import streamlit as st
 import time
+import modules.pageSwitcher as PageSwitcher
 
 with open("data/users.json") as f:
     user_data = json.load(f)
     f.close()
 
-def login():
+
+def loginPage():
     st.title("SpaceTraders - v2")
-    st.subheader("Login")
-    
+
+    tab1, tab2, tab3 = st.tabs(["Login", "Import", "Register"])
+
+    with tab1:
+        login()
+    with tab2:
+        loginImport()
+    with tab3:
+        register()
+
+
+def login():
     placeholder = st.empty()
 
     with placeholder.form("Login"):
-        #col1, col2 = st.columns([1, 1])
-
-        st.markdown("#### Enter your credentials")
+        st.markdown("#### Enter Agent Callsign")
         agent = st.text_input("Agent")
         submit = st.form_submit_button("Login")
 
@@ -25,6 +35,7 @@ def login():
         alert = st.success("Welcome " + agent)
         time.sleep(3)
         alert.empty()
+        PageSwitcher.pageState(0)
 
     elif submit and (agent not in user_data):
         alert = st.error("Agent: " + agent + " - not found, please register to continue")
@@ -52,6 +63,26 @@ def register():
         alert = st.success("Welcome " + agent)
         time.sleep(3)
         alert.empty()
+        st.session_state.page = 0
+        
+    else:
+        pass
+
+def loginImport():
+    placeholder = st.empty()
+
+    with placeholder.form("Import"):
+        st.markdown("#### Import Agent")
+        token = st.text_input("Token")
+        submit = st.form_submit_button("Import")
+
+    if submit:
+        placeholder.empty()
+        agent = "Test"
+        alert = st.success("Welcome " + agent)
+        time.sleep(3)
+        alert.empty()
+        st.session_state.page = 0
         
     else:
         pass
