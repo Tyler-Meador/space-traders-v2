@@ -1,0 +1,39 @@
+{
+    "testAgentpy_1": {
+        "data": {
+            "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZGVudGlmaWVyIjoiVEVTVEFHRU5UUFlfMSIsInZlcnNpb24iOiJ2Mi4xLjUiLCJyZXNldF9kYXRlIjoiMjAyNC0wMi0xMSIsImlhdCI6MTcwODQwMzUwMywic3ViIjoiYWdlbnQtdG9rZW4ifQ.aw-QtfImwC6m0zUcg2lOeOdwaT9_Ryqi1VsoXcruJ3k_EP0SWJ_ePS7Bybc32YLzjQuVrIWNbZOeFuB2NZscmRX3_tptybopt5oGwKBWSfHaAdiUaHaITJGSUdXqBtVJ2kUcKQ4UwjVLUj-Ai9FLwDkzD_LNl0iaM8cp4ti_NwxGGSIgy1uVAS7ZzCEMG1_flh8OZJojQXAeiVXSSj21B9O_6XcokPwh3Pq7Lz-gHD1p91q8YP4zMic2zInKaOMOtOFD9EMcqpsZXT8f-KgRDeUdHVP2PAu-Lu2_rT64lHRF-pfWjrgrSGiAJ4r8f5h5iVCntKuJOU3JmYzJeEp0iw",
+            "agent": {
+                "accountId": "clstvc3tl9pbos60c03ztb9fa",
+                "symbol": "TESTAGENTPY_1",
+                "headquarters": "X1-BU78-A1",
+                "credits": 175000,
+                "startingFaction": "COSMIC",
+                "shipCount": 0
+            },
+            "contract": {
+                "id": "clstvc3vu9pbqs60c3cpc8at6",
+                "factionSymbol": "COSMIC",
+                "type": "PROCUREMENT",
+                "terms": {
+                    "deadline": "2024-02-27T04:31:43.499Z",
+                    "payment": {
+                        "onAccepted": 2349,
+                        "onFulfilled": 14090
+                    },
+                    "deliver": [
+                        {
+                            "tradeSymbol": "IRON_ORE",
+                            "destinationSymbol": "X1-BU78-H49",
+                            "unitsRequired": 77,
+                            "unitsFulfilled": 0
+                        }
+                    ]
+                },
+                "accepted": false,
+                "fulfilled": false,
+                "expiration": "2024-02-21T04:31:43.499Z",
+                "deadlineToAccept": "2024-02-21T04:31:43.499Z"
+            }
+        }
+    }
+}
