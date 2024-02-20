@@ -1,0 +1,12 @@
+[[pages]]
+path = "pages/login.py"
+name = "Login"
+
+[[pages]]
+path = "pages/agent.py"
+name = "Agent"
+
+[[pages]]
+path = "main.py"
+name = "Home"
+
