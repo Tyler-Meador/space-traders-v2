@@ -2,7 +2,6 @@ import requests
 import json
 import streamlit as st
 import time
-import requestHandler as RequestHandler
 import modules.requestHandler as RequestHandler
 
 def login():
