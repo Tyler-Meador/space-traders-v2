@@ -2,28 +2,14 @@ import requests
 import json
 import streamlit as st
 import time
-import modules.pageSwitcher as PageSwitcher
-
-with open("data/users.json") as f:
-    user_data = json.load(f)
-    f.close()
-
-
-def loginPage():
-    st.title("SpaceTraders - v2")
-
-    tab1, tab2, tab3 = st.tabs(["Login", "Import", "Register"])
-
-    with tab1:
-        login()
-    with tab2:
-        loginImport()
-    with tab3:
-        register()
-
 
 def login():
     placeholder = st.empty()
+
+    with open("data/users.json") as f:
+        user_data = json.load(f)
+        f.close()
+    
 
     with placeholder.form("Login"):
         st.markdown("#### Enter Agent Callsign")
@@ -33,9 +19,14 @@ def login():
     if submit and (agent in user_data):
         placeholder.empty()
         alert = st.success("Welcome " + agent)
+
+        st.session_state.agent = user_data[agent]
+
         time.sleep(3)
         alert.empty()
-        PageSwitcher.pageState(0)
+        st.rerun()
+
+
 
     elif submit and (agent not in user_data):
         alert = st.error("Agent: " + agent + " - not found, please register to continue")
@@ -60,10 +51,35 @@ def register():
 
     if submit:
         placeholder.empty()
-        alert = st.success("Welcome " + agent)
-        time.sleep(3)
-        alert.empty()
-        st.session_state.page = 0
+
+        json_data = {
+            "symbol": agent,
+            "faction": faction.upper()
+        }
+
+        response = requests.post("https://api.spacetraders.io/v2/register", json_data).json()
+
+
+        if "error" in response:
+            st.write(response)
+        else:
+            alert = st.success("Welcome " + agent)
+
+            newUserData = {
+                "data": {
+                    "token": response["data"]["token"],
+                    "agent": response["data"]["agent"],
+                    "contract": response["data"]["contract"]
+                }
+            }
+
+            st.session_state.agent = newUserData
+
+            writeJson(newUserData, agent)
+
+            time.sleep(3)
+            alert.empty()
+            st.rerun()
         
     else:
         pass
@@ -78,11 +94,55 @@ def loginImport():
 
     if submit:
         placeholder.empty()
-        agent = "Test"
-        alert = st.success("Welcome " + agent)
-        time.sleep(3)
-        alert.empty()
-        st.session_state.page = 0
+
+        headers = {
+            "Authorization": "Bearer " + token
+        }
+
+        response = requests.get("https://api.spacetraders.io/v2/my/agent", headers=headers).json()
+        response2 = requests.get("https://api.spacetraders.io/v2/my/contracts", headers=headers).json()
+
+
+        if "error" in response:
+            st.write(response)
+        else:
+            agent = response["data"]["symbol"]
+            newUserData = {
+                "data": {
+                    "token": token,
+                    "agent": response["data"],
+                    "contract": response2["data"][0]
+                }
+            }
+
+            alert = st.success("Welcome " + agent )
+            st.session_state.agent = newUserData
+
+            writeJson(newUserData, agent)
+
+            time.sleep(3)
+            alert.empty()
+            st.rerun()
         
     else:
         pass
+
+
+
+def writeJson(new_data, agent):
+    with open("data/users.json", 'r+') as f:
+        file_data = json.load(f)
+        file_data[agent] = new_data
+        f.seek(0)
+        json.dump(file_data, f, indent=4)
+
+
+def loginSection():
+    tab1, tab2, tab3 = st.tabs(["Login", "Import", "Register"])
+
+    with tab1:
+        login()
+    with tab2:
+        loginImport()
+    with tab3:
+        register()
