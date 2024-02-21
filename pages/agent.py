@@ -3,7 +3,7 @@ import modules.login as Login
 import dateutil.parser
 import requests
 import random
-from streamlit_modal import Modal
+import time
 
 agent = None
 
@@ -88,16 +88,16 @@ if 'agent' not in st.session_state:
     Login.loginSection()
 else:
     agent = st.session_state.agent
-    tab1, tab2, tab3 = st.tabs(["Agent", "Contract", "Ships"])
+    agentTab, contractTab, shipsTab, logoutTab = st.tabs(["Agent", "Contract", "Ships", "Logout"])
     
-    with tab1:
+    with agentTab:
         col1, col2, col3 = st.columns([1, .5, 4])
         with col1:
             st.image(open("assets/pilot1.svg").read(), use_column_width="always", caption=str(agent["data"]["agent"]["symbol"]).lower().capitalize()) 
         with col3:
             renderAgentDetails()
 
-    with tab2:
+    with contractTab:
         with st.container(height=50, border=False):
             col1, col2, col3 = st.columns([.4, .5, 2])
             with col1:
@@ -120,7 +120,7 @@ else:
         with container:
             renderContractTerms()
 
-    with tab3:
+    with shipsTab:
         headers = {
             "Authorization": "Bearer " + agent["data"]["token"]
         }
@@ -176,6 +176,36 @@ else:
                         st.text("")
 
                         st.button(label="Set Active", key=ship["symbol"], on_click=setActive, args=(ship,))
+
+    with logoutTab:
+        placeholder = st.empty()
+        with placeholder.container(border=True):
+            row1 = st.columns([2, 1.1, 2])
+            row2 = st.columns([1, 2, 1])
+            row3 = st.columns([1, 4, 1])
+            row4 = st.columns([2, 1, 2])
+
+            with row1[1]:
+                st.subheader("Logout")
+            with row2[1]:
+                st.text("Logging out of Agent: " + str(agent["data"]["agent"]["symbol"]).lower().capitalize())
+            with row3[1]:
+                st.text("All Data will be saved and available on next login")
+            with row4[1]:
+                submitted = st.button(label="Logout", key="logout")
+
+        if submitted:
+            placeholder.empty()
+            alert = st.success("You have been successfully logged out.")
+
+            time.sleep(3)
+            alert.empty()
+            del st.session_state["agent"]
+            st.switch_page("main.py")
+
+
+
+
 
 
 
