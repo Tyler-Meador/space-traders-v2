@@ -2,25 +2,14 @@ import requests
 import json
 import streamlit as st
 import time
-from streamlit_extras.switch_page_button import switch_page
-from st_pages import hide_pages, show_pages
-import modules.hiddenPages as hiddenPages
-
-hide_pages(hiddenPages.pages)
-
-with open("data/users.json") as f:
-    user_data = json.load(f)
-    f.close()
-
-
-def updatePage():
-    hiddenPages.removePage("Agent")
-    hiddenPages.addPage("Login")
-
-    switch_page("Agent")
 
 def login():
     placeholder = st.empty()
+
+    with open("data/users.json") as f:
+        user_data = json.load(f)
+        f.close()
+    
 
     with placeholder.form("Login"):
         st.markdown("#### Enter Agent Callsign")
@@ -31,10 +20,11 @@ def login():
         placeholder.empty()
         alert = st.success("Welcome " + agent)
 
+        st.session_state.agent = user_data[agent]
+
         time.sleep(3)
         alert.empty()
-
-        updatePage()
+        st.rerun()
 
 
 
@@ -83,13 +73,13 @@ def register():
                 }
             }
 
+            st.session_state.agent = newUserData
 
             writeJson(newUserData, agent)
 
             time.sleep(3)
             alert.empty()
-
-            updatePage()
+            st.rerun()
         
     else:
         pass
@@ -126,13 +116,13 @@ def loginImport():
             }
 
             alert = st.success("Welcome " + agent )
+            st.session_state.agent = newUserData
 
             writeJson(newUserData, agent)
 
             time.sleep(3)
             alert.empty()
-
-            updatePage()
+            st.rerun()
         
     else:
         pass
@@ -147,13 +137,12 @@ def writeJson(new_data, agent):
         json.dump(file_data, f, indent=4)
 
 
-st.title("SpaceTraders - v2")
+def loginSection():
+    tab1, tab2, tab3 = st.tabs(["Login", "Import", "Register"])
 
-tab1, tab2, tab3 = st.tabs(["Login", "Import", "Register"])
-
-with tab1:
-    login()
-with tab2:
-    loginImport()
-with tab3:
-    register()
+    with tab1:
+        login()
+    with tab2:
+        loginImport()
+    with tab3:
+        register()
