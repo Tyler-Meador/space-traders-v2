@@ -1,9 +1,11 @@
 import streamlit as st
-from st_pages import show_pages_from_config, hide_pages
-import modules.hiddenPages as hiddenPages
+import st_pages
 
-hide_pages(hiddenPages.pages)
-
-show_pages_from_config()
+st_pages.show_pages(
+    [
+        st_pages.Page("pages/agent.py", "Agent"),
+        st_pages.Page("main.py", "Home")
+    ]
+)
 
 st.title("SpaceTraders - v2")
