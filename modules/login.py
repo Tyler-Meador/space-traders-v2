@@ -2,6 +2,7 @@ import requests
 import json
 import streamlit as st
 import time
+import modules.requestHandler as RequestHandler
 
 def login():
     placeholder = st.empty()
@@ -57,7 +58,7 @@ def register():
             "faction": faction.upper()
         }
 
-        response = requests.post("https://api.spacetraders.io/v2/register", json_data).json()
+        response = RequestHandler.register(json_data)
 
 
         if "error" in response:
@@ -95,12 +96,8 @@ def loginImport():
     if submit:
         placeholder.empty()
 
-        headers = {
-            "Authorization": "Bearer " + token
-        }
-
-        response = requests.get("https://api.spacetraders.io/v2/my/agent", headers=headers).json()
-        response2 = requests.get("https://api.spacetraders.io/v2/my/contracts", headers=headers).json()
+        response = RequestHandler.myAgent()
+        response2 = RequestHandler.myContracts()
 
 
         if "error" in response:
