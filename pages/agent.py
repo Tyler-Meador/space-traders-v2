@@ -1,12 +1,11 @@
 import streamlit as st
 import modules.login as Login
 import dateutil.parser
-import requests
 import random
 import time
+import modules.requestHandler as RequestHandler
 
 agent = None
-
 
 def renderAgentDetails():
         col1, col2 = st.columns([.3, 1])
@@ -16,14 +15,14 @@ def renderAgentDetails():
             st.text("Credits:")
             st.text("Faction:")
         with col2:
-            st.text(str(agent["data"]["agent"]["accountId"]))
-            st.text(agent["data"]["agent"]["headquarters"])
-            st.text(agent["data"]["agent"]["credits"])
-            st.text(agent["data"]["agent"]["startingFaction"])
+            st.text(str(agent["data"]["accountId"]))
+            st.text(agent["data"]["headquarters"])
+            st.text(agent["data"]["credits"])
+            st.text(agent["data"]["startingFaction"])
 
-def renderContract():
+def renderContract(contract):
         col1, col2, col3, col4 = st.columns([.35, .6, .55, .7])
-        accepted = agent["data"]["contract"]["accepted"]
+        accepted = contract["accepted"]
 
         with col1:
             st.text("Faction:")
@@ -32,8 +31,8 @@ def renderContract():
 
 
         with col2:
-            st.text(agent["data"]["contract"]["factionSymbol"])
-            st.text(agent["data"]["contract"]["type"])
+            st.text(contract["factionSymbol"])
+            st.text(contract["type"])
             st.text(accepted)
 
         with col3:
@@ -45,12 +44,12 @@ def renderContract():
 
         with col4:
             if not accepted:
-                st.text(dateutil.parser.parse(agent["data"]["contract"]["deadlineToAccept"]).strftime("%m/%d/%y - %H:%M:%S"))
+                st.text(dateutil.parser.parse(contract["deadlineToAccept"]).strftime("%m/%d/%y - %H:%M:%S"))
 
-            st.text(dateutil.parser.parse(agent["data"]["contract"]["expiration"]).strftime("%m/%d/%y - %H:%M:%S"))
-            st.text(agent["data"]["contract"]["fulfilled"])
+            st.text(dateutil.parser.parse(contract["expiration"]).strftime("%m/%d/%y - %H:%M:%S"))
+            st.text(contract["fulfilled"])
 
-def renderContractTerms():
+def renderContractTerms(contract):
     col1, col2, col3, col4 = st.columns([1.1, 1.6, 1.4, 1])
 
     with col1:
@@ -60,10 +59,10 @@ def renderContractTerms():
         st.text("Units Fulfilled:")
 
     with col2:
-        st.text(dateutil.parser.parse(agent["data"]["contract"]["terms"]["deadline"]).strftime("%m/%d/%y - %H:%M:%S"))
-        st.text(agent["data"]["contract"]["terms"]["deliver"][0]["tradeSymbol"])
-        st.text(agent["data"]["contract"]["terms"]["deliver"][0]["unitsRequired"])
-        st.text(agent["data"]["contract"]["terms"]["deliver"][0]["unitsFulfilled"])
+        st.text(dateutil.parser.parse(contract["terms"]["deadline"]).strftime("%m/%d/%y - %H:%M:%S"))
+        st.text(contract["terms"]["deliver"][0]["tradeSymbol"])
+        st.text(contract["terms"]["deliver"][0]["unitsRequired"])
+        st.text(contract["terms"]["deliver"][0]["unitsFulfilled"])
 
     with col3:
         st.text("Payment On Accept:")
@@ -71,9 +70,9 @@ def renderContractTerms():
         st.text("Delivery Dest:")
 
     with col4:
-        st.text("$" + str(agent["data"]["contract"]["terms"]["payment"]["onAccepted"]))
-        st.text("$" + str(agent["data"]["contract"]["terms"]["payment"]["onFulfilled"]))
-        st.text(agent["data"]["contract"]["terms"]["deliver"][0]["destinationSymbol"])
+        st.text("$" + str(contract["terms"]["payment"]["onAccepted"]))
+        st.text("$" + str(contract["terms"]["payment"]["onFulfilled"]))
+        st.text(contract["terms"]["deliver"][0]["destinationSymbol"])
 
 def generateFullDetails(ship):
     st.session_state.shipDetails = ship
@@ -82,51 +81,84 @@ def generateFullDetails(ship):
 def setActive(ship):
     st.session_state.activeShip = ship
 
+def onContractAccept(contractId):
+    RequestHandler.acceptContract(contractId)
+
+
+@st.cache_data(ttl=300)
+def getRandom(range):
+    return random.choice(range)
+
+
+
+
+
+
+
+if "fullDetails" not in st.session_state:
+    st.session_state['fullDetails'] = False
+
 st.title("SpaceTraders - v2")
 
-if 'agent' not in st.session_state:
+if 'headers' not in st.session_state:
     Login.loginSection()
 else:
-    agent = st.session_state.agent
+    agent = RequestHandler.myAgent()
     agentTab, contractTab, shipsTab, logoutTab = st.tabs(["Agent", "Contract", "Ships", "Logout"])
     
     with agentTab:
         col1, col2, col3 = st.columns([1, .5, 4])
         with col1:
-            st.image(open("assets/pilot1.svg").read(), use_column_width="always", caption=str(agent["data"]["agent"]["symbol"]).lower().capitalize()) 
+            st.image(open("assets/pilot1.svg").read(), use_column_width="always", caption=str(agent["data"]["symbol"])) 
         with col3:
             renderAgentDetails()
 
     with contractTab:
-        with st.container(height=50, border=False):
-            col1, col2, col3 = st.columns([.4, .5, 2])
-            with col1:
-                st.image(open("assets/Contract.svg").read(), use_column_width="never")  
-            with col2:
-                st.container(height=5, border=False)
-                st.text("Contract ID:")
-            with col3:
-                st.container(height=5, border=False)
-                st.text(str(agent["data"]["contract"]["id"]))
-        
-        st.divider()
- 
-        with st.container():
-            renderContract()
-        
-        container = st.container(border=True)
-        container.subheader("Terms")
 
-        with container:
-            renderContractTerms()
+        agentContracts = RequestHandler.myContracts()
+
+        if 'error' in agentContracts:
+            st.write("No Contracts Available")
+        else:
+            for contract in agentContracts["data"]:
+                with st.container(height=70, border=False):
+                    row1 = st.columns([.4, .5, 1, .6])
+                    row2 = st.columns([.4, .5, 1, .6])
+
+                    with row2[0]:
+                        st.image(open("assets/Contract.svg").read(), use_column_width="never")  
+                    with row2[1]:
+                        st.container(height=5, border=False)
+                        st.text("Contract ID:")
+                    with row2[2]:
+                        st.container(height=5, border=False)
+                        st.text(str(contract["id"]))
+                    with row2[3]:
+                        butRow1 = st.columns([.6])
+                        butRow2 = st.columns([.6])
+
+                        with butRow2[0]:
+                            st.button(label="Accept Contract", key="ContractAccept", on_click=onContractAccept, args=(contract["id"],))
+
+                
+                st.divider()
+
+                with st.container():
+                    renderContract(contract)
+                
+                container = st.container(border=True)
+                container.subheader("Terms")
+
+                with container:
+                    renderContractTerms(contract) 
+                
+                st.divider()
 
     with shipsTab:
-        headers = {
-            "Authorization": "Bearer " + agent["data"]["token"]
-        }
-        response = requests.get("https://api.spacetraders.io/v2/my/ships", headers=headers).json()
+        response = RequestHandler.myShips()
 
         for ship in response["data"]:
+            placeholder = st.empty()
 
             container = st.container(border=True)
                  
@@ -165,21 +197,32 @@ else:
 
                         with row2[1]:
                             if ship["registration"]["role"] == "SATELLITE":
-                                st.image(open("assets/satellite.svg").read(), use_column_width="always")
+                                satAsset = open("assets/satellite.svg").read()
+                                st.image(satAsset, use_column_width="always")
                             else:
-                                rand = random.choice([1,2,3])
-                                st.image(open("assets/ship" + str(rand) + ".svg").read(), use_column_width="always")
 
-                    butColLeft, butColCenter, butColRight = st.columns([.6, 1, .3])
+                                rand = [1,2,3]
+                                st.image(open("assets/ship" + str(getRandom(rand)) + ".svg").read(), use_column_width="always")
 
-                    with butColCenter:
+                    butColLeft, butColRight = st.columns([.7, .8])
+
+                    with butColLeft:
                         st.text("")
-
                         st.button(label="Set Active", key=ship["symbol"], on_click=setActive, args=(ship,))
+                    with butColRight:
+                        st.text("")
+                        st.session_state.fullDetails = st.button(label="View Full Details", key=(ship["symbol"] + "FullDetails"))
+
+            if st.session_state.fullDetails is not False:
+                expander = st.expander(("Ship: " + ship["registration"]["role"] + " - Full Details"))
+                expander.write(ship)
+
+
+
 
     with logoutTab:
-        placeholder = st.empty()
-        with placeholder.container(border=True):
+        placeholder2 = st.empty()
+        with placeholder2.container(border=True):
             row1 = st.columns([2, 1.1, 2])
             row2 = st.columns([1, 2, 1])
             row3 = st.columns([1, 4, 1])
@@ -188,20 +231,21 @@ else:
             with row1[1]:
                 st.subheader("Logout")
             with row2[1]:
-                st.text("Logging out of Agent: " + str(agent["data"]["agent"]["symbol"]).lower().capitalize())
+                st.text("Logging out of Agent: " + st.session_state.agentName)
             with row3[1]:
                 st.text("All Data will be saved and available on next login")
             with row4[1]:
                 submitted = st.button(label="Logout", key="logout")
 
         if submitted:
-            placeholder.empty()
+            placeholder2.empty()
             alert = st.success("You have been successfully logged out.")
 
             time.sleep(3)
             alert.empty()
-            del st.session_state["agent"]
-            st.switch_page("main.py")
+            del st.session_state["agentName"]
+            del st.session_state["headers"]
+            st.rerun()
 
 
 

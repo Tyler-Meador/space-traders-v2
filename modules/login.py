@@ -8,28 +8,30 @@ def login():
     placeholder = st.empty()
 
     with open("data/users.json") as f:
-        user_data = json.load(f)
+        stored_users = json.load(f)
         f.close()
     
 
     with placeholder.form("Login"):
         st.markdown("#### Enter Agent Callsign")
-        agent = st.text_input("Agent")
+        agent = st.text_input("Agent").upper()
         submit = st.form_submit_button("Login")
 
-    if submit and (agent in user_data):
+    if submit and (agent in stored_users):
         placeholder.empty()
         alert = st.success("Welcome " + agent)
 
-        st.session_state.agent = user_data[agent]
+        st.session_state.headers = {
+            "Authorization": "Bearer " + stored_users[agent]
+        }
+
+        st.session_state.agentName = agent
 
         time.sleep(3)
         alert.empty()
         st.rerun()
 
-
-
-    elif submit and (agent not in user_data):
+    elif submit and (agent not in stored_users):
         alert = st.error("Agent: " + agent + " - not found, please register to continue")
         time.sleep(3)
         alert.empty()
@@ -43,7 +45,7 @@ def register():
 
     with placeholder.form("Register"):
         st.markdown("#### Register Agent")
-        agent = st.text_input("Agent")
+        agent = st.text_input("Agent").upper()
         faction = st.selectbox(
             "Select a Faction",
             ('Cosmic', 'Galactic', 'Quantum', 'Dominion', 'Astro', 'Corsairs', 'Void', 'Obsidian', 'Aegis', 'United')
@@ -67,14 +69,14 @@ def register():
             alert = st.success("Welcome " + agent)
 
             newUserData = {
-                "data": {
-                    "token": response["data"]["token"],
-                    "agent": response["data"]["agent"],
-                    "contract": response["data"]["contract"]
-                }
+                agent: response["data"]["token"]
             }
 
-            st.session_state.agent = newUserData
+            st.session_state.headers = {
+                "Authorization": "Bearer " + response["data"]["token"]
+            }
+
+            st.session_state.agentName = agent
 
             writeJson(newUserData, agent)
 
@@ -96,24 +98,23 @@ def loginImport():
     if submit:
         placeholder.empty()
 
-        response = RequestHandler.myAgent()
-        response2 = RequestHandler.myContracts()
+        st.session_state.headers = {
+            "Authorization": "Bearer " + token
+        }
 
+        response = RequestHandler.myAgent()
 
         if "error" in response:
             st.write(response)
         else:
             agent = response["data"]["symbol"]
             newUserData = {
-                "data": {
-                    "token": token,
-                    "agent": response["data"],
-                    "contract": response2["data"][0]
-                }
+                agent: token
             }
 
             alert = st.success("Welcome " + agent )
-            st.session_state.agent = newUserData
+
+            st.session_state.agentName = agent
 
             writeJson(newUserData, agent)
 
