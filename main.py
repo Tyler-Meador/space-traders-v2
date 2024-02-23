@@ -7,7 +7,7 @@ st_pages.show_pages(
     [
         st_pages.Page("main.py", "Home"),
         st_pages.Page("pages/agent.py", "Agent"),
-        st_pages.Page("pages/system.py", "System"),
+        st_pages.Page("pages/galaxy.py", "Galaxy"),
     ]
 )
 

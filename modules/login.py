@@ -5,6 +5,7 @@ import time
 import modules.requestHandler as RequestHandler
 
 def login():
+    st.container(height=10,border=False)
     placeholder = st.empty()
 
     with open("data/users.json") as f:
@@ -41,6 +42,7 @@ def login():
 
 
 def register():
+    st.container(height=10,border=False)
     placeholder = st.empty()
 
     with placeholder.form("Register"):
@@ -68,17 +70,13 @@ def register():
         else:
             alert = st.success("Welcome " + agent)
 
-            newUserData = {
-                agent: response["data"]["token"]
-            }
-
             st.session_state.headers = {
                 "Authorization": "Bearer " + response["data"]["token"]
             }
 
             st.session_state.agentName = agent
 
-            writeJson(newUserData, agent)
+            writeJson(response["data"]["token"], agent)
 
             time.sleep(3)
             alert.empty()
@@ -88,6 +86,7 @@ def register():
         pass
 
 def loginImport():
+    st.container(height=10,border=False)
     placeholder = st.empty()
 
     with placeholder.form("Import"):
@@ -108,15 +107,12 @@ def loginImport():
             st.write(response)
         else:
             agent = response["data"]["symbol"]
-            newUserData = {
-                agent: token
-            }
 
             alert = st.success("Welcome " + agent )
 
             st.session_state.agentName = agent
 
-            writeJson(newUserData, agent)
+            writeJson(token, agent)
 
             time.sleep(3)
             alert.empty()
@@ -127,7 +123,7 @@ def loginImport():
 
 
 
-def writeJson(new_data, agent):
+def writeJson(new_data,agent):
     with open("data/users.json", 'r+') as f:
         file_data = json.load(f)
         file_data[agent] = new_data
