@@ -22,5 +22,13 @@ def acceptContract(contractId):
         return requests.post("https://api.spacetraders.io/v2/my/contracts/" + str(contractId) + "/accept", headers=st.session_state.headers).json()
 
 @st.cache_data(ttl=12000)
-def systems():
+def allSystems():
     return requests.get("https://api.spacetraders.io/v2/systems").json()
+
+@st.cache_data(ttl=300)
+def specificSystem(system):
+    return requests.get(f"https://api.spacetraders.io/v2/systems/{system}").json()
+
+@st.cache_data(ttl=300)
+def waypoint(system, waypoint):
+    return requests.get(f"https://api.spacetraders.io/v2/systems/{system}/waypoints/{waypoint}").json()

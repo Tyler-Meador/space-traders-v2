@@ -90,11 +90,6 @@ def getRandom(range):
     return random.choice(range)
 
 
-
-
-
-
-
 if "fullDetails" not in st.session_state:
     st.session_state['fullDetails'] = False
 

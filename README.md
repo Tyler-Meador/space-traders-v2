@@ -1,2 +1,3 @@
 # space-traders-v2
-version 2 of space traders client, learning python
+This project is used as a means to learn python. 
+The overall objective is to create a usable UI for the SpaceTraders API game.
