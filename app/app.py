@@ -11,7 +11,6 @@ if 'agentName' not in st.session_state:
     Login.loginSection()
     st.divider()
     menu()
-
 else:
 
     st.switch_page("pages\\Fleet.py")
