@@ -6,6 +6,7 @@ def authenticated_menu():
     st.sidebar.title("SpaceTraders - v2")
     st.sidebar.divider()
     st.sidebar.page_link("pages\\Fleet.py", label="Fleet")
+    st.sidebar.page_link("pages\\Contracts.py", label="Contracts")
 
 
 

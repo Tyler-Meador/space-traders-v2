@@ -7,7 +7,6 @@ def myShips():
         return requests.get("https://api.spacetraders.io/v2/my/ships", headers=st.session_state.headers).json()
     
 
-@st.cache_data(ttl=300)
 def myShipsSpecific(shipName):
     if "headers" in st.session_state:
         return requests.get(f"https://api.spacetraders.io/v2/my/ships/{shipName}", headers=st.session_state.headers).json()

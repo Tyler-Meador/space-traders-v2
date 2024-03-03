@@ -2,42 +2,39 @@ import json
 import streamlit as st
 import time
 import modules.requestHandler as RequestHandler
+import modules.dbManager as db
+from constants.Constants import DB_CONSTANTS
 
 def login():
     st.container(height=10,border=False)
     placeholder = st.empty()
-
-    with open("app/data/users.json") as f:
-        stored_users = json.load(f)
-        f.close()
-    
 
     with placeholder.form("Login"):
         st.markdown("#### Enter Agent Callsign")
         agent = st.text_input("Agent").upper()
         submit = st.form_submit_button("Login")
 
-    if submit and (agent in stored_users):
-        placeholder.empty()
-        alert = st.success("Welcome " + agent)
+    if submit:
+        token = db.query(DB_CONSTANTS.READ_TOKEN, [agent], "read")
 
-        st.session_state.headers = {
-            "Authorization": "Bearer " + stored_users[agent]
-        }
+        if not token:
+            alert = st.error("Agent: " + agent + " - not found, please register to continue")
+            time.sleep(1)
+            alert.empty()
+            
+        else:
+            placeholder.empty()
+            alert = st.success("Welcome " + agent)
 
-        st.session_state.agentName = agent
+            st.session_state.headers = {
+                "Authorization": "Bearer " + token[0][0]
+            }
 
-        time.sleep(3)
-        alert.empty()
-        st.rerun()
+            st.session_state.agentName = agent 
 
-    elif submit and (agent not in stored_users):
-        alert = st.error("Agent: " + agent + " - not found, please register to continue")
-        time.sleep(3)
-        alert.empty()
-
-    else:
-        pass
+            time.sleep(3)
+            alert.empty()
+            st.rerun()
 
 
 def register():
@@ -63,7 +60,6 @@ def register():
 
         response = RequestHandler.register(json_data)
 
-
         if "error" in response:
             st.write(response)
         else:
@@ -75,9 +71,22 @@ def register():
 
             st.session_state.agentName = agent
 
-            writeJson(response["data"]["token"], agent)
+            dbAgent = [
+                    response["data"]['agent']['accountId'], 
+                    response["data"]['agent']['symbol'], 
+                    response["data"]['agent']['headquarters'],
+                    response["data"]['agent']['credits'],
+                    response["data"]['agent']['startingFaction'],
+                    response["data"]['agent']['shipCount'],
+                    response["data"]['token'],
+                ]
 
-            time.sleep(3)
+            db.query(DB_CONSTANTS.INSERT_AGENT,
+                    dbAgent, 
+                    "write"
+                )
+
+            time.sleep(1)
             alert.empty()
             st.rerun()
         
@@ -107,11 +116,21 @@ def loginImport():
         else:
             agent = response["data"]["symbol"]
 
+            dbAgent = [
+                response["data"]["accountId"],
+                response["data"]["symbol"],
+                response["data"]["headquarters"],
+                response["data"]["credits"],
+                response["data"]["startingFaction"],
+                response["data"]["shipCount"],
+                token
+            ]
+
+            db.query(DB_CONSTANTS.INSERT_AGENT, dbAgent, "write")
+
             alert = st.success("Welcome " + agent )
 
             st.session_state.agentName = agent
-
-            writeJson(token, agent)
 
             time.sleep(3)
             alert.empty()
@@ -119,15 +138,6 @@ def loginImport():
         
     else:
         pass
-
-
-
-def writeJson(new_data,agent):
-    with open("app/data/users.json", 'r+') as f:
-        file_data = json.load(f)
-        file_data[agent] = new_data
-        f.seek(0)
-        json.dump(file_data, f, indent=4)
 
 
 def loginSection():

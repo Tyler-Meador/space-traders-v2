@@ -25,7 +25,7 @@ def tableStyleHeader(Symbol, System, Waypoint, Fuel, Cargo):
 
 def tableStyleRows(symbol, badges, system, waypoint, fuel, cargo, counter, ship):
     with stylable_container(key="fleetRows", css_styles=StyleConstants.FLEET_ROWS):
-        row = st.columns([.17, .25, .33, .17, .11, .25, .2, .2])
+        row = st.columns([.21, .25, .33, .17, .11, .25, .2, .2])
 
         with row[0]:
             selected = ui.button(symbol, key=f"{symbol}FleetButton{str(counter)}", class_name="")

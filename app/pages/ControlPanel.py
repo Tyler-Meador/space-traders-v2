@@ -5,8 +5,18 @@ from modules.requestHandler import orbit, dock, flightMode, refuel
 import modules.topBar as TopBar
 from constants.Constants import StyleConstants
 from modules.menu import menu_with_redirect
+import modules.navHelper as NavHelper
+import modules.pagination as Pagination
+from operator import itemgetter
+import modules.requestHandler as RequestHandler
+import time
+
 
 menu_with_redirect()
+
+
+def sortRows(index):
+    return sorted(systemWaypoints, key=itemgetter(index))
 
 
 def determineModeIndex():
@@ -98,6 +108,19 @@ def refuelShip():
     TopBar.updateAgent()
 
 
+def updatePagination():
+    if st.session_state['PaginationCurrentPage'] == 1:
+        st.session_state['dataStart'] = 0
+    else:
+        st.session_state['dataStart'] = ((st.session_state['PaginationCurrentPage']  - 1) * st.session_state['batch_size'])
+
+    st.session_state['dataEnd'] = st.session_state['dataStart'] + st.session_state['batch_size']
+
+
+def updateBatchSize():
+    st.session_state['batch_size'] = st.session_state['PaginationBatchSize']
+
+    updatePagination()
 
 determineStatusIndex()
 determineModeIndex()
@@ -198,6 +221,7 @@ else:
             st.write(f"Crew: {st.session_state['ship']["crew"]["current"]} / {st.session_state['ship']["crew"]["capacity"]}")
             st.write(f"Morale: {st.session_state['ship']["crew"]["morale"]}")
 
+
     ### CONTROL PANEL
 
     with stylable_container(key="shipControls", css_styles=StyleConstants.SHIP_INFO):
@@ -229,9 +253,159 @@ else:
                 st.button(label="Refuel", key="shipRefuelButton", type="primary", on_click=refuelShip, disabled=st.session_state['refuelDisable'])
 
 
+#### Display Panel
+    placeholder = st.empty()
+
+    if 'progressStarted' in st.session_state and st.session_state['progressStarted'] == True:
+
+        timeLeft = int(st.session_state['navTimeDifference'])
+        length = int(st.session_state['navTimeDifference'])
+
+        startingBar = 1 / (length * 100)
+        count = 0
+
+        placeholder.progress(0)
+
+        for percent_complete in range(length * 100):
+            percent_complete = percent_complete / (length * 100)
+
+            time.sleep(.01)
+            count = count + 1
+
+            if count == 100:
+                count = 0
+                timeLeft -= 1
+
+            placeholder.progress(
+                    percent_complete + startingBar, 
+                    text=f'Arriving in {timeLeft}s... Route: {st.session_state['ship']['nav']['route']['departure']['symbol']} --> {st.session_state['ship']['nav']['route']['destination']['symbol']}'
+                )
+
+        time.sleep(3)
+        placeholder.empty()
+
+        st.session_state['progressStarted'] = False
+        st.session_state['ship'] = RequestHandler.myShipsSpecific(st.session_state['ship']['symbol'])['data']
+        st.rerun()
+
+    ## NAV
+    if 'dataStart' not in st.session_state:
+        st.session_state['dataStart'] = 0
+        st.session_state['dataEnd'] = 5
+
+    if 'batch_size' not in st.session_state:
+        st.session_state['batch_size'] = 5    
+
     if st.session_state['controlPanelDisplay'] == "nav":
-        with stylable_container(key="shipControlDisplay", css_styles=StyleConstants.CONTROL_PANEL_DISPLAY):
-            st.text("nav")
+        with placeholder.container():
+            with stylable_container(key="shipControlDisplay", css_styles=StyleConstants.CONTROL_PANEL_DISPLAY):
+                systemWaypoints = NavHelper.getWaypointsInSystem(st.session_state['ship']["nav"]["systemSymbol"])
+        
+                ship = st.session_state['ship']
+
+                for waypoint in systemWaypoints:
+                    distance = NavHelper.calculateDistance(
+                                {'x': ship['nav']['route']['destination']['x'], 'y': ship['nav']['route']['destination']['y']},
+                                {'x': waypoint[2], 'y': waypoint[3]}
+                            )
+
+                    time = NavHelper.calculateTime(
+                                dist = distance,
+                                engineSpeed = ship['engine']['speed'],
+                                multiplier = NavHelper.getMultiplier(ship['nav']['flightMode'])
+                            )
+                    fuel = NavHelper.fuelEstimation(distance, ship['nav']['flightMode']) 
+
+                    systemWaypoints[systemWaypoints.index(waypoint)] = waypoint + (distance, time, fuel)
+
+                dataSet = systemWaypoints
+                top_menu = st.columns([5,3,6,2,5])
+
+                with top_menu[0]:
+                    sort_field = st.selectbox("Sort By", options=['Waypoint', 'Distance', 'Travel Time', 'Type', 'Estimated Fuel'])
+
+                with top_menu[1]:
+                    sort_direction = st.radio(
+                        "Direction", options=["⬆️", "⬇️"], horizontal=True
+                    )
+
+                    if sort_direction == "⬆️":
+                        sort_desc = False
+
+                    else:
+                        sort_desc = True
+
+                with top_menu[2]:
+                    search = st.text_input(label="Search (Waypoint, Type or POI)", key="navSeachInput")
+                    if search:
+                        if '-' in search:
+                            systemWaypoints = [item for item in systemWaypoints if item[0].lower() == search.lower()]
+                        elif search.lower() == 'shipyard':
+                            systemWaypoints = [item for item in systemWaypoints if 'shipyard' in item[4].lower()]
+
+                        elif search.lower() == 'marketplace':
+                            systemWaypoints = [item for item in systemWaypoints if 'marketplace' in item[4].lower()]
+
+                        else:
+                            searchSet = [item for item in systemWaypoints if item[1].lower() == search.lower()]
+                            if searchSet:
+                                systemWaypoints = searchSet
+
+                with top_menu[4]:
+                    st.radio(
+                        "Navigation Mode", options=["Regular", "Jump", "Warp"], horizontal=True
+                    )
+
+                if sort_field == 'Waypoint':
+                    dataSet = sorted(systemWaypoints, key=itemgetter(0), reverse=sort_desc)
+
+                elif sort_field == 'Type':
+                    dataSet = sorted(systemWaypoints, key=itemgetter(1), reverse=sort_desc)
+
+                elif sort_field == 'Distance':
+                    dataSet = sorted(systemWaypoints, key=itemgetter(5), reverse=sort_desc)
+
+                elif sort_field == 'Travel Time':
+                    dataSet = sorted(systemWaypoints, key=itemgetter(6), reverse=sort_desc)
+
+                elif sort_field == 'Estimated Fuel':
+                    dataSet = sorted(systemWaypoints, key=itemgetter(7), reverse=sort_desc)
+
+
+                ## Table Header
+
+                NavHelper.tableStyleHeader("Waypoint", "Distance" , "Travel Time", "Type", "Estimated Fuel", "POIs")
+
+                ## Table Rows
+                for  count, waypoint in enumerate(dataSet[st.session_state['dataStart']:st.session_state['dataEnd']], start = 0):
+                    NavHelper.tableStyleRows(
+                        waypoint = waypoint,
+                        ship = st.session_state['ship'],
+                        counter = count
+                    )
+
+                    #if counter == batch_size:
+                    #    break;
+        
+
+                pagination = st.container()
+
+                bottom_menu = st.columns((4, 1, 1))
+                with bottom_menu[2]:
+                    st.selectbox("Waypoints per page", key='PaginationBatchSize', options=[5, 10], on_change=updateBatchSize)
+
+                with bottom_menu[1]:
+                    total_pages = (
+                        int(len(dataSet) / st.session_state['batch_size']) if int(len(dataSet) / st.session_state['batch_size']) > 0 else 1
+                    )
+
+                    current_page = st.number_input(
+                        "Page", key="PaginationCurrentPage" ,min_value=1, max_value=total_pages, step=1, on_change=updatePagination
+                    )
+
+                with bottom_menu[0]:
+                    st.markdown(f"Page **{current_page}** of **{total_pages}** ")
+
 
     elif st.session_state['controlPanelDisplay'] == "mine":
         with stylable_container(key="shipControlDisplay", css_styles=StyleConstants.CONTROL_PANEL_DISPLAY):
