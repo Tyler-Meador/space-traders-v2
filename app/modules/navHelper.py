@@ -15,7 +15,7 @@ def calculateTime(dist, multiplier, engineSpeed):
     return round(round(max(1, dist)) * (multiplier / engineSpeed) + 15)
 
 def getWaypointsInSystem(system):
-    res = db.query(DB_CONSTANTS.SELECT_WAYPOINTS_FROM_SYSTEM, [system], "read")
+    res = db.query(DB_CONSTANTS.SELECT_WAYPOINT, [system], "read")
     waypoints = []
     for wp in res:
         waypoints.append(wp)
@@ -52,24 +52,23 @@ def fuelEstimation(dist, flightMode):
 
 
 def grabTraits(system, waypoint):
-    data = db.query(DB_CONSTANTS.READ_TRAITS, [waypoint, "MARKETPLACE", waypoint, "SHIPYARD"], "read")
+    data = db.query(DB_CONSTANTS.READ_TRAITS_SHIPYARD_MARKETPLACE, [waypoint], "read")
 
-    waypointCheck = db.query(DB_CONSTANTS.WAYPOINT_CHECK, [waypoint], "read")
-    if not waypointCheck:
-        traits = RequestHandler.waypoint(system, waypoint)
-        db.insertWaypoints(traits['data'])
- 
+    if not data:
+        traits = RequestHandler.waypoint(system, waypoint) 
+        db.insertTraits(traits['data'])
+
         grabTraits(system, waypoint)
 
+    finalData = [poi[1] for poi in data if (poi[1] == 'Shipyard' or poi[1] == 'Marketplace')]
 
-    return data
-
+    return finalData
+ 
 def navButtonSubmit(waypoint):
     data = {
         "waypointSymbol": waypoint
     }
     response = RequestHandler.navToWaypoint(st.session_state['ship']['symbol'], data)
-    print(response)
 
     st.session_state['ship']['nav'] = response['data']['nav']
     st.session_state['ship']['fuel'] = response['data']['fuel']
@@ -86,32 +85,27 @@ def navButtonSubmit(waypoint):
 
 st.cache_data(ttl=300)
 def tableStyleRows(waypoint, ship, counter):
-    if (waypoint[7] > st.session_state['ship']['fuel']['current']) or (ship['nav']['status'] != 'IN_ORBIT') or (waypoint[0] ==  st.session_state['ship']["nav"]["waypointSymbol"]):
+    if (waypoint[6] > st.session_state['ship']['fuel']['current']) or (ship['nav']['status'] != 'IN_ORBIT') or (waypoint[0] ==  st.session_state['ship']["nav"]["waypointSymbol"]):
         st.session_state['navDisabled'] = True
     else:
         st.session_state['navDisabled'] = False
 
-    if waypoint[4] is None:
-        traits = grabTraits(ship["nav"]["systemSymbol"], waypoint[0])
-        st.rerun()
-    else:
-        traits = waypoint[4].split(',')
+    traits = grabTraits(ship["nav"]["systemSymbol"], waypoint[0])
+    #print(traits)
 
     container = stylable_container(key="fleetRows", css_styles=StyleConstants.FLEET_ROWS)
     with container:
         row = st.columns([7, 7, 7, 8, 4, 3, 4, 3])
 
-        res = None
-
         with row[0]:
             ui.button(waypoint[0], key=f"{waypoint[0]}navSystemButton{str(counter)}", variant="default", class_name="m-2")
             with row[1]:
                 st.text("")
-                st.write(f'{waypoint[5]} AUs')
+                st.write(f'{waypoint[4]} AUs')
 
             with row[2]: 
                 st.text("")
-                st.write(f'{waypoint[6]}s')
+                st.write(f'{waypoint[5]}s')
 
         with row[3]:
             st.text("")
@@ -119,16 +113,16 @@ def tableStyleRows(waypoint, ship, counter):
         
         with row[4]:
             st.text("")
-            st.write(str(waypoint[7]))
+            st.write(str(waypoint[6]))
         
         with row[5]:
             st.text("")
             if 'Shipyard' in traits:
                 idx = traits.index('Shipyard')
                 ui.badges(badge_list=[(traits[idx], "secondary")], class_name="", key=f"{ship["nav"]["systemSymbol"]}{traits[idx]}badges1{str(counter)}")
-
+#
         with row[6]: 
-            st.text("")
+            st.text("") 
             if 'Marketplace' in traits:
                 idx = traits.index('Marketplace')
                 ui.badges(badge_list=[(traits[idx], "secondary")], class_name="", key=f"{ship["nav"]["systemSymbol"]}{traits[idx]}badges1{str(counter)}")
