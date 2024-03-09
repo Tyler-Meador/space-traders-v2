@@ -363,13 +363,13 @@ else:
                     dataSet = sorted(systemWaypoints, key=itemgetter(1), reverse=sort_desc)
 
                 elif sort_field == 'Distance':
-                    dataSet = sorted(systemWaypoints, key=itemgetter(5), reverse=sort_desc)
+                    dataSet = sorted(systemWaypoints, key=itemgetter(4), reverse=sort_desc)
 
                 elif sort_field == 'Travel Time':
-                    dataSet = sorted(systemWaypoints, key=itemgetter(6), reverse=sort_desc)
+                    dataSet = sorted(systemWaypoints, key=itemgetter(5), reverse=sort_desc)
 
                 elif sort_field == 'Estimated Fuel':
-                    dataSet = sorted(systemWaypoints, key=itemgetter(7), reverse=sort_desc)
+                    dataSet = sorted(systemWaypoints, key=itemgetter(6), reverse=sort_desc)
 
 
                 ## Table Header
