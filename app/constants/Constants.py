@@ -19,9 +19,8 @@ class DB_CONSTANTS:
     """
     UPDATE_AGENT = """
         update Agent
-            set credits = (?),
-            set shipCount = (?)
-        where accountId = (?)
+            set credits = (?), shipCount = (?)
+        where accountId = (?);
     """
     READ_TOKEN = "select token from Agent where symbol = (?)"
     READ_AGENT = "select * from Agent where symbol = (?)"
