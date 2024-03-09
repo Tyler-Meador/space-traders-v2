@@ -341,10 +341,10 @@ else:
                         if '-' in search:
                             systemWaypoints = [item for item in systemWaypoints if item[0].lower() == search.lower()]
                         elif search.lower() == 'shipyard':
-                            systemWaypoints = [item for item in systemWaypoints if 'shipyard' in item[4].lower()]
+                            systemWaypoints = [item for item in systemWaypoints if 'Shipyard' in NavHelper.grabTraits(ship["nav"]["systemSymbol"], item[0])]
 
                         elif search.lower() == 'marketplace':
-                            systemWaypoints = [item for item in systemWaypoints if 'marketplace' in item[4].lower()]
+                            systemWaypoints = [item for item in systemWaypoints if 'Marketplace' in NavHelper.grabTraits(ship["nav"]["systemSymbol"], item[0])]
 
                         else:
                             searchSet = [item for item in systemWaypoints if item[1].lower() == search.lower()]
