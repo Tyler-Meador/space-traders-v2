@@ -14,27 +14,29 @@ class NumConstants:
 
 class DB_CONSTANTS:
     INSERT_AGENT = """
-        insert or ignore into agents(accountId, symbol, headquarters, credits, startingFaction, shipCount, token) 
+        insert into Agent (accountId, symbol, headquarters, credits, startingFaction, shipCount, token) 
         values (?,?,?,?,?,?,?)
     """
     UPDATE_AGENT = """
-        update agents
+        update Agent
             set credits = (?),
             set shipCount = (?)
         where accountId = (?)
     """
-    READ_TOKEN = "select token from agents where symbol = (?)"
-    READ_AGENT = "select * from agents where symbol = (?)"
-    READ_TRAITS = """select DISTINCT [traits.name]
-        from waypoints 
-        where (symbol = (?) and [traits.symbol] = (?))
-        or (symbol = (?) and [traits.symbol] = (?))
+    READ_TOKEN = "select token from Agent where symbol = (?)"
+    READ_AGENT = "select * from Agent where symbol = (?)"
+    READ_TRAITS_SHIPYARD_MARKETPLACE = """
+        select w.symbol, t.name
+        from Waypoints w
+        inner join WaypointTraits wt
+        on w.symbol = wt.waypoint_symbol
+        inner join Traits t
+        on wt.trait_id = t.trait_id
+        where w.symbol = (?);
     """
-    SELECT_WAYPOINTS_FROM_SYSTEM = """
-        select distinct systems."waypoints.symbol", replace(waypoints_traits_as_list.type, '_', ' ') as type, systems."waypoints.x", systems."waypoints.y", waypoints_traits_as_list.listof_traits
-        from systems
-        left join waypoints_traits_as_list
-        on systems."waypoints.symbol" = waypoints_traits_as_list.symbol
-        where systems.symbol = (?);
+    SELECT_WAYPOINT= """
+        select symbol, type, x, y
+        from Waypoints
+        where Waypoints.system_symbol = (?);
     """
     WAYPOINT_CHECK = "select symbol, systemSymbol from waypoints where symbol = (?)"
