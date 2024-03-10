@@ -36,6 +36,7 @@ if st.session_state['contractRadio'] == 'Accepted':
 
 if st.session_state['contractRadio'] == 'Pending':
     ContractHelper.tableStyleHeader()
+    ContractHelper.tableStyleRow(contracts[0])
 
 if st.session_state['contractRadio'] == 'Completed':
     st.write('Completed')

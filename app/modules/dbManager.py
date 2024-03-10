@@ -37,17 +37,24 @@ def insertTraits(data):
 
         query(f'insert into WaypointTraits (waypoint_symbol, trait_id) VALUES ((?), (?))', [data['symbol'], res[0][0]], 'write')
 
-def insertContracts(data, agent):
+def insertContracts(data, agentName):
     conn = sqlite3.connect('app\\data\\spaceTradersV2.db')
 
     df_main = pd.json_normalize(data)
-    df_main.insert(1, 'agent', agent, True)
 
-    df_deliver = pd.json_normalize(data, record_path= ['terms', 'deliver'], record_prefix='terms.deliver.', meta='id')
+    res = query('select accountId from Agent where symbol = (?)', [agentName], 'read')
+ 
+    df_main.insert(1, 'agent', res[0][0], True)
+    df_main = df_main.rename(columns={'terms.deadline' : 'deadline', 'terms.payment.onAccepted' : 'onAccept', 'terms.payment.onFulfilled': 'onFulfilled'})
 
-    df_out = df_main.merge(df_deliver, on = 'id').drop('terms.deliver', axis=1)
+    df_main = df_main.drop(columns='terms.deliver')
 
-    df_out.to_sql(name="contracts", con=conn, if_exists="append", index=False)
+    df_main.to_sql(name='Contracts', con=conn, if_exists='append', index=False)
+
+    df_deliver = pd.json_normalize(data, record_path= ['terms', 'deliver'])
+    df_deliver.insert(1, 'contractId', df_main['id'], True)
+
+    df_deliver.to_sql(name='ContractDeliverables', con=conn, if_exists='append', index=False)
 
     conn.close()
 
