@@ -15,6 +15,7 @@ def updateAgent():
                 ],
                 'write'
              )
+    return agent
 
 def renderTopBar():
 

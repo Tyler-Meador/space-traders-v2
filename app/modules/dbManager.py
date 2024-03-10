@@ -37,7 +37,8 @@ def insertTraits(data):
 
         query(f'insert into WaypointTraits (waypoint_symbol, trait_id) VALUES ((?), (?))', [data['symbol'], res[0][0]], 'write')
 
-def insertContracts(data, agentName):
+
+def insertContracts(data, agentName, method):
     conn = sqlite3.connect('app\\data\\spaceTradersV2.db')
 
     df_main = pd.json_normalize(data)
@@ -49,12 +50,12 @@ def insertContracts(data, agentName):
 
     df_main = df_main.drop(columns='terms.deliver')
 
-    df_main.to_sql(name='Contracts', con=conn, if_exists='append', index=False)
+    df_main.to_sql(name='Contracts', con=conn, if_exists=method, index=False)
 
     df_deliver = pd.json_normalize(data, record_path= ['terms', 'deliver'])
     df_deliver.insert(1, 'contractId', df_main['id'], True)
 
-    df_deliver.to_sql(name='ContractDeliverables', con=conn, if_exists='append', index=False)
+    df_deliver.to_sql(name='ContractDeliverables', con=conn, if_exists=method, index=False)
 
     conn.close()
 

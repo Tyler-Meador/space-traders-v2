@@ -32,11 +32,14 @@ with stylable_container(key="contractRadios", css_styles="{ border-bottom: 1px s
 contracts = ContractHelper.getContracts()
 
 if st.session_state['contractRadio'] == 'Accepted':
-    st.write('Accepted')
+    if(contracts[0][4] == 1):
+        ContractHelper.tableStyleHeaderAccepted()
+        ContractHelper.tableStyleRowAccepted(contracts[0])
 
 if st.session_state['contractRadio'] == 'Pending':
-    ContractHelper.tableStyleHeader()
-    ContractHelper.tableStyleRow(contracts[0])
+    if(contracts[0][4] == 0):
+        ContractHelper.tableStyleHeaderPending()
+        ContractHelper.tableStyleRowPending(contracts[0])
 
 if st.session_state['contractRadio'] == 'Completed':
     st.write('Completed')
